@@ -5,10 +5,12 @@ import ExpenseModal from "./components/ExpenseModal";
 
 import { useBudget } from "./hooks/useBudget";
 import { useMemo } from "react";
+import ExpenseList from "./components/ExpenseList";
 
 export default function App() {
   const { state } = useBudget();
   const thereIsBudget = useMemo(() => state.budget > 0, [state.budget]);
+  console.log({thereIsBudget})
 
   return (
     <>
@@ -20,6 +22,7 @@ export default function App() {
 
       {thereIsBudget && (
         <main className="max-w-3xl mx-auto py-10">
+          <ExpenseList />
           <ExpenseModal />
         </main>
       )}

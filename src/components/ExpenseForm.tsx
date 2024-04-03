@@ -6,19 +6,20 @@ import DatePicker from "react-date-picker";
 import "react-calendar/dist/Calendar.css";
 import "react-date-picker/dist/DatePicker.css";
 
-import type { DrafExpense, Value } from "../types";
+import type { DraftExpense, Value } from "../types";
 import ErrorMsg from "./ErrorMsg";
 
+import { useBudget } from "../hooks/useBudget";
+
 export default function ExpenseForm() {
-  const initialExpense: DrafExpense = {
+  const [expense, setExpense] = useState<DraftExpense>({
     amount: 0,
     expenseName: "",
     category: "",
     date: new Date(),
-  };
-
-  const [expense, setExpense] = useState<DrafExpense>({ ...initialExpense });
-  const [error, setError] = useState('');
+  });
+  const [error, setError] = useState("");
+  const { dispatch } = useBudget();
 
   const handleOnlynumbers = (e: KeyboardEvent<HTMLInputElement>) => {
     const keyPressed = e.key;
@@ -49,9 +50,12 @@ export default function ExpenseForm() {
     const fieldEmpty = Object.values(expense).some((value) => !value);
 
     if (fieldEmpty) {
-      setError('Todos los campos son obligatorios');
+      setError("Todos los campos son obligatorios");
       return;
     }
+
+    // Agregar un nuevo gasto
+    dispatch({ type: "add-expense", payload: { expense } });
   };
 
   return (
