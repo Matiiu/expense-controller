@@ -7,9 +7,11 @@ import {
 } from "react";
 
 import { useBudget } from "../hooks/useBudget";
+import ErrorMsg from "./ErrorMsg";
 
 export default function BudgetForm() {
   const [budget, setBudget] = useState(0);
+  const [error, setError] = useState("");
   const { dispatch } = useBudget();
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -24,7 +26,10 @@ export default function BudgetForm() {
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
+    if (!budget) {
+      setError("Debe ingresar un presupuesto");
+      return;
+    }
     dispatch({ type: "add-budget", payload: { budget } });
   };
 
@@ -57,6 +62,7 @@ export default function BudgetForm() {
         className="bg-blue-600 hover:bg-blue-700 cursor-pointer w-full p-2 text-white font-black uppercase disabled:opacity-10 disabled:cursor-auto"
         disabled={disabeldBtn}
       />
+      {error && <ErrorMsg>{error}</ErrorMsg>}
     </form>
   );
 }

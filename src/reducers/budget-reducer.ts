@@ -1,25 +1,39 @@
 import { v4 as uuidv4 } from "uuid";
-import type { DraftExpense, Expense } from "../types";
+import type { Category, DraftExpense, Expense } from "../types";
 
 export type BudgetActions =
   | { type: "add-budget"; payload: { budget: number } }
   | { type: "switch-modal"; payload: { openModal: boolean } }
   | { type: "add-expense"; payload: { expense: DraftExpense } }
   | { type: "remove-expense"; payload: { id: Expense["id"] } }
-  | { type: "get-expense-by-id"; payload: { id: Expense["id"] } };
+  | { type: "get-expense-by-id"; payload: { id: Expense["id"] } }
+  | { type: "reset-app" }
+  | { type: "filter-category"; payload: { id: Category["id"] } };
 
 export type BudgetState = {
   budget: number;
   modal: boolean;
   expenses: Expense[];
   editingId: Expense["id"];
+  currCategoty: Category["id"];
+};
+
+const initialBudget = (): number => {
+  const budgetStr = localStorage.getItem("budget");
+  return budgetStr ? +budgetStr : 0;
+};
+
+const initialExpenses = (): Expense[] => {
+  const expensesStr = localStorage.getItem("expenses");
+  return expensesStr ? JSON.parse(expensesStr) : [];
 };
 
 export const initialState: BudgetState = {
-  budget: 0,
+  budget: initialBudget(),
   modal: false,
-  expenses: [],
+  expenses: initialExpenses(),
   editingId: "",
+  currCategoty: "",
 };
 
 export function budgetReducer(
@@ -37,7 +51,7 @@ export function budgetReducer(
     return {
       ...state,
       modal: action.payload.openModal,
-      editingId: !action.payload.openModal && "", // Limpiar solo cuando openModal sea falso,
+      editingId: action.payload.openModal ? state.editingId : "", // Limpiar solo cuando openModal sea falso
     };
   }
 
@@ -75,6 +89,26 @@ export function budgetReducer(
       ...state,
       editingId: action.payload.id,
       modal: true,
+    };
+  }
+
+  if (action.type === "reset-app") {
+    // Eliminar la llave del local storage y restablecer los valores a sus valores iniciales
+    localStorage.removeItem("expenses");
+    localStorage.removeItem("budget");
+    return {
+      budget: 0,
+      modal: false,
+      expenses: [],
+      editingId: "",
+      currCategoty: "",
+    };
+  }
+
+  if (action.type === "filter-category") {
+    return {
+      ...state,
+      currCategoty: action.payload.id,
     };
   }
 

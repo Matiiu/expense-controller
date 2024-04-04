@@ -1,4 +1,11 @@
-import { useState, KeyboardEvent, ChangeEvent, FormEvent, useEffect } from "react";
+import {
+  useState,
+  KeyboardEvent,
+  ChangeEvent,
+  FormEvent,
+  useEffect,
+  useMemo,
+} from "react";
 import { categories } from "../data/categories";
 
 import DatePicker from "react-date-picker";
@@ -10,22 +17,30 @@ import ErrorMsg from "./ErrorMsg";
 
 import { useBudget } from "../hooks/useBudget";
 
+import { formatCurrency } from "../helpers";
+
 export default function ExpenseForm() {
-  const [expense, setExpense] = useState<DraftExpense>({
+  const initialEpense: DraftExpense = {
     amount: 0,
     expenseName: "",
     category: "",
     date: new Date(),
-  });
+  };
+
+  const [expense, setExpense] = useState<DraftExpense>({ ...initialEpense });
   const [error, setError] = useState("");
-  const { state, dispatch } = useBudget();
+  const { state, dispatch, budgetAvailable } = useBudget();
+  const [previusAmout, setPreviusAmout] = useState(0);
 
   useEffect(() => {
     if (state.editingId) {
-      const editingExpense = state.expenses.filter(currExpense => currExpense.id === state.editingId)[0];
-      setExpense(editingExpense)
+      const editingExpense = state.expenses.filter(
+        (currExpense) => currExpense.id === state.editingId
+      )[0];
+      setExpense(editingExpense);
+      setPreviusAmout(editingExpense.amount);
     }
-  }, [state.editingId])
+  }, [state.editingId]);
 
   const handleOnlynumbers = (e: KeyboardEvent<HTMLInputElement>) => {
     const keyPressed = e.key;
@@ -50,6 +65,16 @@ export default function ExpenseForm() {
     });
   };
 
+  const title = useMemo(
+    () => (!state.editingId ? "Nuevo Gasto" : "Editar Gasto"),
+    [state.editingId]
+  );
+
+  const submitName = useMemo(
+    () => (!state.editingId ? "Registrar Gasto" : "Guardar Cambios"),
+    [state.editingId]
+  );
+
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     // Validamos si alguno de los campos está vacío
@@ -60,14 +85,28 @@ export default function ExpenseForm() {
       return;
     }
 
+    // Validar si el gasto excede el presupuesto disponible
+    // Validamos si el gasto editado excede el presupuesto disponible más el actual presupuesto
+    if (expense.amount - previusAmout > budgetAvailable) {
+      setError(
+        `No tienes saldo disponible para esta gasto. Solo te quedan disponibles ${formatCurrency(
+          budgetAvailable
+        )} para gastar`
+      );
+      return;
+    }
     // Agregar o editar un gasto
     dispatch({ type: "add-expense", payload: { expense } });
+
+    // Restablecer los valores
+    setExpense({ ...initialEpense });
+    setPreviusAmout(0);
   };
 
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>
       <legend className="uppercase text-center text-2xl font-black border-b-4 border-blue-500 pt-2">
-        Nuevo Gasto
+        {title}
       </legend>
 
       {error && <ErrorMsg>{error}</ErrorMsg>}
@@ -142,7 +181,7 @@ export default function ExpenseForm() {
       <input
         type="submit"
         className="bg-blue-600 cursor-pointer w-full p-2 text-white uppercase font-bold rounded-lg"
-        value="Registrar Gastos"
+        value={submitName}
       />
     </form>
   );

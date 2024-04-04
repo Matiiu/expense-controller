@@ -6,17 +6,20 @@ import { useBudget } from "../hooks/useBudget";
 import ExpenseForm from "./ExpenseForm";
 
 export default function ExpenseModal() {
-  const { state, dispatch } = useBudget();
+  const { budgetAvailable, state, dispatch } = useBudget();
+
+  const handleOpeModal = () => {
+    if (budgetAvailable < 1) {
+      window.alert("Ya no te queda saldo disponible para agregar más gastos");
+      return;
+    }
+    dispatch({ type: "switch-modal", payload: { openModal: true } });
+  };
 
   return (
     <>
       <div className="fixed right-5 bottom-5 flex items-center justify-center">
-        <button
-          type="button"
-          onClick={() =>
-            dispatch({ type: "switch-modal", payload: { openModal: true } })
-          }
-        >
+        <button type="button" onClick={handleOpeModal}>
           <PlusCircleIcon className="w-16 h-16 text-blue-600 rounded-full" />
         </button>
       </div>
