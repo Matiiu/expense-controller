@@ -1,5 +1,4 @@
-import { useState, KeyboardEvent, ChangeEvent, FormEvent } from "react";
-
+import { useState, KeyboardEvent, ChangeEvent, FormEvent, useEffect } from "react";
 import { categories } from "../data/categories";
 
 import DatePicker from "react-date-picker";
@@ -19,7 +18,14 @@ export default function ExpenseForm() {
     date: new Date(),
   });
   const [error, setError] = useState("");
-  const { dispatch } = useBudget();
+  const { state, dispatch } = useBudget();
+
+  useEffect(() => {
+    if (state.editingId) {
+      const editingExpense = state.expenses.filter(currExpense => currExpense.id === state.editingId)[0];
+      setExpense(editingExpense)
+    }
+  }, [state.editingId])
 
   const handleOnlynumbers = (e: KeyboardEvent<HTMLInputElement>) => {
     const keyPressed = e.key;
@@ -54,7 +60,7 @@ export default function ExpenseForm() {
       return;
     }
 
-    // Agregar un nuevo gasto
+    // Agregar o editar un gasto
     dispatch({ type: "add-expense", payload: { expense } });
   };
 

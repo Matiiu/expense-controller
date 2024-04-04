@@ -4,25 +4,23 @@ import type { DraftExpense, Expense } from "../types";
 export type BudgetActions =
   | { type: "add-budget"; payload: { budget: number } }
   | { type: "switch-modal"; payload: { openModal: boolean } }
-  | { type: "add-expense"; payload: { expense: DraftExpense } };
+  | { type: "add-expense"; payload: { expense: DraftExpense } }
+  | { type: "remove-expense"; payload: { id: Expense["id"] } }
+  | { type: "get-expense-by-id"; payload: { id: Expense["id"] } };
 
 export type BudgetState = {
   budget: number;
   modal: boolean;
   expenses: Expense[];
+  editingId: Expense["id"];
 };
 
 export const initialState: BudgetState = {
   budget: 0,
   modal: false,
   expenses: [],
+  editingId: "",
 };
-
-//Validations
-const createExpense = (expense: DraftExpense): Expense => ({
-  ...expense,
-  id: uuidv4(),
-});
 
 export function budgetReducer(
   state: BudgetState = initialState,
@@ -39,15 +37,44 @@ export function budgetReducer(
     return {
       ...state,
       modal: action.payload.openModal,
+      editingId: !action.payload.openModal && "", // Limpiar solo cuando openModal sea falso,
     };
   }
 
   if (action.type === "add-expense") {
-    const expense = createExpense(action.payload.expense);
+    let updateExpenses: Expense[] = [];
+    if ("id" in action.payload.expense) {
+      const changeExpense = action.payload.expense as Expense;
+      updateExpenses = state.expenses.map((expense) =>
+        expense.id === changeExpense.id ? changeExpense : expense
+      );
+    } else {
+      updateExpenses = [
+        ...state.expenses,
+        { ...action.payload.expense, id: uuidv4() },
+      ];
+    }
+
     return {
       ...state,
-      expenses: [...state.expenses, expense],
+      expenses: updateExpenses,
       modal: false,
+      editingId: "",
+    };
+  }
+
+  if (action.type === "remove-expense") {
+    return {
+      ...state,
+      expenses: state.expenses.filter(({ id }) => id !== action.payload.id),
+    };
+  }
+
+  if (action.type === "get-expense-by-id") {
+    return {
+      ...state,
+      editingId: action.payload.id,
+      modal: true,
     };
   }
 
